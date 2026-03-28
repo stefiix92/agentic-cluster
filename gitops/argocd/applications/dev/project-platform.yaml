@@ -1,0 +1,22 @@
+# PRD: FR-2 (GitOps boundaries), §7 blast-radius — allowed repos and destinations only.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argo
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  description: Platform workloads (PostgreSQL, Keycloak) — namespaces database, identity
+  sourceRepos:
+    - https://github.com/stefiix92/agentic-cluster.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: database
+    - server: https://kubernetes.default.svc
+      namespace: identity
+    - server: https://kubernetes.default.svc
+      namespace: argo
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
