@@ -93,6 +93,8 @@ resource "aws_eks_node_group" "this" {
   node_role_arn   = aws_iam_role.node.arn
   subnet_ids      = var.private_subnet_ids
 
+  capacity_type = var.node_capacity_type
+
   scaling_config {
     desired_size = var.node_desired_size
     max_size     = var.node_max_size

@@ -32,6 +32,12 @@ variable "kubernetes_api_public_access_cidrs" {
   description = "CIDRs allowed to reach the public API endpoint (e.g. [\"203.0.113.10/32\"] for your home IP). Ignored when cluster_endpoint_public_access is false."
 }
 
+variable "node_capacity_type" {
+  type        = string
+  default     = "SPOT"
+  description = "Managed node group capacity: ON_DEMAND or SPOT (same instance_types; SPOT uses EC2 Spot)."
+}
+
 variable "node_instance_types" {
   type        = list(string)
   default     = ["t3.medium"]
