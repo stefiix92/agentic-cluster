@@ -17,6 +17,9 @@ spec:
       namespace: identity
     - server: https://kubernetes.default.svc
       namespace: argo
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
