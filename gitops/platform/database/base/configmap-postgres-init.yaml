@@ -1,0 +1,18 @@
+# Runs once on empty PGDATA. PRD FR-3.4 — Keycloak DB user + database.
+# KEYCLOAK_DB_PASSWORD is set on the StatefulSet from Secret (overlay).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-keycloak
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/name: postgres
+data:
+  init-keycloak.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" <<-EOSQL
+      CREATE USER keycloak WITH PASSWORD '${KEYCLOAK_DB_PASSWORD}';
+      CREATE DATABASE keycloak OWNER keycloak;
+      GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
+    EOSQL
