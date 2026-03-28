@@ -1,0 +1,23 @@
+# PRD: FR-3.3–FR-3.5 — Keycloak in namespace identity (DB-backed; OIDC for Argo: FR-3.6)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-identity
+  namespace: argo
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/stefiix92/agentic-cluster.git
+    targetRevision: HEAD
+    path: gitops/platform/identity/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: identity
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
