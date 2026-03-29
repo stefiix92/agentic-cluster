@@ -36,6 +36,7 @@ override.tf.json
 tfplan
 *.tfplan
 plan.out
+terraform.secrets.tfvars
 
 # Terragrunt cache
 **/.terragrunt-cache/
