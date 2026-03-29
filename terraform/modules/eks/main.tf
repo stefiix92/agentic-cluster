@@ -132,3 +132,91 @@ resource "aws_iam_openid_connect_provider" "eks" {
     Name = "${var.cluster_name}-oidc"
   })
 }
+
+# EBS CSI driver (managed add-on): gp2/gp3 PVCs need provisioner ebs.csi.aws.com
+data "aws_iam_policy_document" "ebs_csi_controller_assume" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks.arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ebs_csi" {
+  name               = "${var.cluster_name}-ebs-csi-controller"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_controller_assume.json
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-ebs-csi-controller"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_AmazonEBSCSIDriverPolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = aws_iam_role.ebs_csi.name
+}
+
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name             = aws_eks_cluster.this.name
+  addon_name               = "aws-ebs-csi-driver"
+  service_account_role_arn = aws_iam_role.ebs_csi.arn
+
+  depends_on = [
+    aws_eks_node_group.this,
+    aws_iam_role_policy_attachment.ebs_csi_AmazonEBSCSIDriverPolicy,
+  ]
+}
+
+# AWS Load Balancer Controller (IRSA) — HTTP(S) ALB via Ingress; dev uses HTTP-only listeners (no ACM).
+data "aws_iam_policy_document" "aws_load_balancer_controller_assume" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.eks.arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:kube-system:aws-load-balancer-controller"]
+    }
+  }
+}
+
+resource "aws_iam_role" "aws_load_balancer_controller" {
+  name               = "${var.cluster_name}-aws-lb-controller"
+  assume_role_policy = data.aws_iam_policy_document.aws_load_balancer_controller_assume.json
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-aws-lb-controller"
+  })
+}
+
+# Customer-managed policy (managed AWSLoadBalancerControllerIAMPolicy is missing/unattachable in some partitions).
+resource "aws_iam_policy" "aws_load_balancer_controller" {
+  name        = "${var.cluster_name}-eks-alb-controller"
+  description = "IRSA for aws-load-balancer-controller (repo: eks-alb-iam-policy.json)"
+  policy      = file("${path.module}/eks-alb-iam-policy.json")
+}
+
+resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
+  role       = aws_iam_role.aws_load_balancer_controller.name
+  policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
+}

@@ -32,3 +32,13 @@ output "node_group_name" {
   description = "Default managed node group name."
   value       = aws_eks_node_group.this.node_group_name
 }
+
+output "ebs_csi_controller_role_arn" {
+  description = "IAM role ARN passed to the aws-ebs-csi-driver EKS add-on (IRSA)."
+  value       = aws_iam_role.ebs_csi.arn
+}
+
+output "aws_load_balancer_controller_role_arn" {
+  description = "IAM role ARN for aws-load-balancer-controller (IRSA)."
+  value       = aws_iam_role.aws_load_balancer_controller.arn
+}
