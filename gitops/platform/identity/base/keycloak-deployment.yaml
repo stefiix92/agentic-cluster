@@ -35,6 +35,8 @@ spec:
             - --http-port=8080
             - --health-enabled=true
           env:
+            - name: KC_HOSTNAME_URL
+              value: http://localhost:8080
             - name: KC_DB
               value: postgres
             - name: KC_DB_URL
