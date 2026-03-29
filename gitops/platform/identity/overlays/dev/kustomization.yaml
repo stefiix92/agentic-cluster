@@ -3,4 +3,16 @@ kind: Kustomization
 resources:
   - ../../base
   - keycloak-secret.yaml
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: keycloak
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: KC_PROXY_HEADERS
+          value: xforwarded
 namespace: identity
