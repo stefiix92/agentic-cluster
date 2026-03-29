@@ -1,0 +1,24 @@
+# Internet-facing HTTP ALB (.aws_load_balancer_controller). Separate group from Keycloak so both apps use path /.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: platform-public-argo
+  namespace: argo
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: platform-public-argo
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80

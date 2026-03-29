@@ -1,0 +1,23 @@
+# Public HTTP ALB via aws-load-balancer-controller (install from Terraform before sync).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-ingress
+  namespace: argo
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/stefiix92/agentic-cluster.git
+    targetRevision: HEAD
+    path: gitops/platform/ingress/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
