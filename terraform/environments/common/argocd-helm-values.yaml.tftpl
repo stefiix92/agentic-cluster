@@ -1,0 +1,29 @@
+# Argo CD Helm values (argo-cd chart). Rendered by Terraform templatefile — see variables.tf (argocd_*).
+# TLS terminates at AWS ALB only when using HTTPS; for dev HTTP ALB, traffic to pods is HTTP (server.insecure).
+# Client secret is injected via merge in main.tf (sensitive).
+
+configs:
+  params:
+    server.insecure: "true"
+
+  cm:
+    create: true
+    url: ${argocd_public_url}
+    oidc.config: |
+      name: Keycloak
+      issuer: ${argocd_oidc_issuer}
+      clientID: ${argocd_oidc_client_id}
+      clientSecret: $oidc.keycloak.clientSecret
+      requestedScopes: ["openid", "profile", "email"]
+    oidc.tls.insecure.skip.verify: "${argocd_oidc_tls_insecure_skip_verify}"
+
+  rbac:
+    create: true
+    policy.default: ""
+    policy.csv: |
+      g, argocd-admin, role:admin
+      g, argocd-readonly, role:readonly
+    scopes: "[groups]"
+
+  secret:
+    createSecret: true
