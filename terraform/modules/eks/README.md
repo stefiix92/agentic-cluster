@@ -2,10 +2,17 @@
 
 Creates an **EKS** control plane, a **managed node group** in **private** subnets, and an **OIDC provider** for IRSA.
 
+## Add-ons / IAM wiring (IRSA)
+
+This module provisions the IAM bits Terraform uses for Kubernetes add-ons:
+
+- **EBS CSI driver**: installs the managed EKS add-on `aws-ebs-csi-driver` and creates an IRSA role for it.
+- **aws-load-balancer-controller** (ALB ingresses): creates an IRSA role + policy; `terraform/environments/common/main.tf` passes the role ARN into the controller Helm release via service account annotations.
+
 ## Kubernetes API network access
 
 | Mode | Settings |
-|------|-----------|
+| ------ | ----------- |
 | **Public API locked to your IP(s)** | `cluster_endpoint_public_access = true`, `cluster_endpoint_private_access = true`, `kubernetes_api_public_access_cidrs = ["x.x.x.x/32"]` |
 | **VPC-only API** (no public endpoint) | `cluster_endpoint_public_access = false`, `cluster_endpoint_private_access = true` — use `kubectl` from a host in the VPC, VPN, or SSM port-forward |
 
