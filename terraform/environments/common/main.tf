@@ -65,6 +65,8 @@ module "eks" {
   node_max_size       = var.eks_node_max_size
 
   tags = var.common_tags
+
+  depends_on = [ module.vpc ]
 }
 
 resource "helm_release" "sealed_secrets" {
